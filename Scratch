@@ -1,0 +1,175 @@
+package com.assignment1;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Stack;
+import java.util.function.Function;
+
+public class CoastGuard {
+
+    public static void main(String[] args) {
+        Result r = generalSearch(
+                new Problem(1),
+                // BFS
+                (nodes, node) -> {
+                    nodes.add(0, node);
+                    return nodes;
+                }
+
+        );
+
+
+        System.out.println(r.solution);
+    }
+
+    // pq DFS,-1, BFS,1; stack, queue, pq
+
+    public interface queue {
+        public void getFront();
+        public void append();
+    };
+
+
+    /*
+    *     ()
+    *      \
+    *       ()
+    *
+    * */
+
+ /*
+ * (Node, State|Problem) [operation] Node (prev + currentCost);
+ *
+ *
+ * */
+    /*
+    GenericQueue<T>
+        T removeFront()
+        add(T)
+
+    Result
+        Node solution
+        bool isFailure();
+
+    GeneralSearch
+        Result search(Problem b, quing-Func);
+
+    Problem
+        ArrayList<Function<Node, Node>> operators;
+        ~~ initalState;
+        ~~
+        boolean isGoal(Node|State x);
+
+        getOperators(Node node);
+
+    Node
+        State;
+        int pathCost;
+
+        int orderingCost = pathCost + hs;
+
+
+        Node parent;
+        Node[] Children;
+        Function<,> op;
+        int depth;
+
+        compareTo(){}
+
+     */
+
+    public static ArrayList<Node> makeQ(Problem p) {
+        ArrayList<Node> list = new ArrayList<>();
+        list.add(new Node(p.initState));
+        return list;
+    }
+
+    public static Node removeFront(ArrayList<Node> nodes) {
+        if (nodes.isEmpty()) return null;
+        return nodes.remove(nodes.size() - 1);
+    }
+
+    public static Result generalSearch(Problem p, QFunc<ArrayList<Node>, Node, ArrayList<Node>> quingFunc) {
+        ArrayList<Node> nodes = makeQ(p);
+
+        while (true) {
+//            for(Node node : nodes)
+//                System.out.print(node.value + " ");
+//            System.out.println("");
+
+            if (nodes.isEmpty())
+                return new Result(null, true);
+            Node node = removeFront(nodes);
+            // debug
+//            System.out.println(node == null ? "null" :  node.value);
+
+            if (p.isGoalState(node))
+                return new Result(node, false);
+            if(node != null && node.value <= 10)
+                // Epa
+                for(Function<Node, Node> op : p.operations)
+                    nodes = quingFunc.apply(nodes, op.apply(node));
+
+        }
+    }
+
+
+    @FunctionalInterface
+    public static interface QFunc<T, B, C> {
+        C apply(T t, B b);
+    }
+
+    static class Problem {
+        int initState;
+        ArrayList<Function<Node, Node>> operations;
+
+        public Problem(int initState) {
+            this.initState = initState;
+            operations = new ArrayList<>();
+            for(int i=0; i<3; i++) {
+                final int inc = i + 1;
+                this.operations.add(
+                        (Node node) -> new Node(node.value + inc)
+                );
+            }
+        }
+
+        public ArrayList<Function<Node, Node>> getOperations(Node node) {
+            return null;
+        }
+
+        public boolean isGoalState(Node node) {
+            if(node == null) return false;
+            return node.value == 10;
+        }
+    }
+
+    /*
+    *
+    *   1
+    * 2 3 4
+    *
+    * */
+
+    static class Node {
+        int value;
+
+        Node(int value) {
+            this.value = value;
+        }
+
+        public String toString(){
+            return "" + value;
+        }
+    }
+
+    static class Result {
+        boolean isFailure;
+        Node solution;
+
+        Result(Node solution, boolean isFailure) {
+            this.isFailure = isFailure;
+            this.solution = solution;
+        }
+    }
+}
