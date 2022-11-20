@@ -17,4 +17,9 @@ public class GQueue<T> implements GenericQueue<T>{
     public void add(T o) {
 
     }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
 }

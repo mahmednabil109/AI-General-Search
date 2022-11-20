@@ -4,4 +4,5 @@ public interface GenericQueue<T> {
 
     public T removeFront();
     public void add(T t);
+    public boolean isEmpty();
 }

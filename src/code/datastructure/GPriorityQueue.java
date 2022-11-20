@@ -15,4 +15,9 @@ public class GPriorityQueue<T> implements GenericQueue<T>{
     public void add(T t) {
 
     }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
 }
