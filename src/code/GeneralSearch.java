@@ -9,6 +9,7 @@ import java.util.function.Function;
 public class GeneralSearch<T> {
 
     public HashSet<Node<T>> memo;
+    public static int MaxDepth = -1;
 
     // TODO Need to be modified to allow IDS
     /// Modified GeneralSearch procedure
@@ -35,11 +36,9 @@ public class GeneralSearch<T> {
                 newNode.parent = node;
 
                 if (memo.contains(newNode)) {
-                    newNode.mark_expanded();
                     continue;
                 }
                 newNode.depth = node.depth + 1;
-                newNode.mark_expanded();
 
                 queue.add(newNode);
             }
