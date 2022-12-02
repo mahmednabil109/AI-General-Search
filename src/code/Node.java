@@ -28,7 +28,12 @@ public abstract class Node<T> implements Comparable<Node<T>>{
 
     @Override
     public int hashCode() {
-        return Objects.hash(state, compareCost, pathCost);
+        return Objects.hash(state);//, compareCost, pathCost);
+    }
+
+    @Override
+    public String toString(){
+        return state.toString() ;//+ ";"+ compareCost "," + parent.pathCost;
     }
 
     @Override

@@ -60,6 +60,11 @@ class Ship implements Cloneable{
             throw new AssertionError();
         }
     }
+
+    @Override
+    public String toString(){
+        return pos.toString() + "," + passengerCount + "," + blackBoxLive;
+    }
 }
 public class CoastGuardState implements Cloneable {
     // TODO DS needs to be modified
@@ -70,6 +75,9 @@ public class CoastGuardState implements Cloneable {
     public Pair<Integer, Integer> pos;
     public int passengerOnBoard;
     public TreeMap<Pair<Integer, Integer>, Ship> ships;
+
+    // info
+    public int retrivedBoxes, deadPassengers;
 
 
     @Override
@@ -115,6 +123,6 @@ public class CoastGuardState implements Cloneable {
 
     @Override
     public String toString(){
-        return ""+this.pos.toString()+"_"+this.passengerOnBoard;
+        return pos.toString() + "," + passengerOnBoard + ";" + ships.toString();
     }
 }

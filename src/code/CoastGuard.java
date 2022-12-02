@@ -24,12 +24,75 @@ public class CoastGuard extends Problem<CoastGuardState> {
         GeneralSearch<CoastGuardState> gs = new GeneralSearch<>();
         CoastGuard coastGardProblem = new CoastGuard();
 
-        Node<CoastGuardState> solution = gs.search(
-                coastGardProblem.parse(problem),
-                // BFS
-                (s) -> new GQueue<Node<CoastGuardState>>());
+        Function<CoastGuardState, GenericQueue<Node<CoastGuardState>>> makeQ =  (CoastGuardState state) -> {
+            CoastGuardNode node = new CoastGuardNode(state);
+            GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
+            queue.add(node);
+            return queue;
+        };
+
+        switch (algo){
+            case "BF":
+                makeQ = (CoastGuardState state) -> {
+                    CoastGuardNode node = new CoastGuardNode(state);
+                    GenericQueue<Node<CoastGuardState>> queue = new GQueue<>();
+                    queue.add(node);
+                    return queue;
+                };
+                break;
+            case "DF":
+                makeQ = (CoastGuardState state) -> {
+                    CoastGuardNode node = new CoastGuardNode(state);
+                    GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
+                    queue.add(node);
+                    return queue;
+                };
+                break;
+
+            case "ID":
+                makeQ = (CoastGuardState state) -> {
+                    CoastGuardNode node = new CoastGuardNode(state);
+                    GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
+                    queue.add(node);
+                    return queue;
+                };
+                break;
+            case "UC":
+            case "GR1":
+            case "GR2":
+            case "AS1":
+            case "AS2":
+                makeQ = (CoastGuardState state) -> {
+                    CoastGuardNode node = new CoastGuardNode(state);
+                    GenericQueue<Node<CoastGuardState>> queue = new GPriorityQueue<>();
+                    queue.add(node);
+                    return queue;
+                };
+                break;
+            default:
+                    makeQ = (CoastGuardState state) -> {
+                        CoastGuardNode node = new CoastGuardNode(state);
+                        GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
+                        queue.add(node);
+                        return queue;
+                    };
+        }
         // TODO handle "visualize" by traversing up the solution node
-        return "";
+        Node<CoastGuardState> solution = gs.search(
+                CoastGuard.parse(problem),
+                makeQ
+                );
+        if (solution == null)
+            return "";
+        String actions = coastGardProblem.backtrack(solution);
+
+        return actions.substring(1) + ";" + solution.state.deadPassengers + ";" + solution.state.retrivedBoxes + ";" + gs.expandedNodesCount;
+    }
+
+    private String backtrack(Node<CoastGuardState> node){
+        if(node.parent == null)
+            return "";
+        return backtrack(node.parent) + "," + node.action;
     }
 
     public static String GenGrid() {
@@ -78,7 +141,6 @@ public class CoastGuard extends Problem<CoastGuardState> {
         return state.ships.isEmpty() && state.passengerOnBoard == 0;
     }
 
-    <<<<<<<HEAD
 
     public Node<CoastGuardState> heuristicFunc1(Node<CoastGuardState> node) {
         CoastGuardState state = node.state;
@@ -115,11 +177,8 @@ public class CoastGuard extends Problem<CoastGuardState> {
         return node;
     }
 
-    public Node<CoastGuardState> retrievePassengerOperation(Node<CoastGuardState> prevNode){
-=======
 
     public Node<CoastGuardState> retrievePassengerOperation(Node<CoastGuardState> prevNode) {
->>>>>>> origin/draft_bfs
         // clone the state
         CoastGuardState state = prevNode.state.clone();
         // retrieve passengers
@@ -134,7 +193,7 @@ public class CoastGuard extends Problem<CoastGuardState> {
         }
         // create the next node
         CoastGuardNode node = new CoastGuardNode(state);
-        node.action = "Retrieve Passengers";
+        node.action = "pickup";
         // update ships state and path cost
         int actionCost = node.update();
         node.pathCost = actionCost + prevNode.pathCost;
@@ -145,12 +204,14 @@ public class CoastGuard extends Problem<CoastGuardState> {
         // clone the state
         CoastGuardState state = prevNode.state.clone();
         CoastGuardNode node = new CoastGuardNode(state);
+        node.action = "retrieve";
         // the black box operation can be done by removing the ship from the state
         // entirely
         node.state.ships.remove(state.pos);
         // update ships state
         int actionCost = node.update();
         node.pathCost = actionCost + prevNode.pathCost;
+        node.state.retrivedBoxes += 1;
         return node;
     }
 
@@ -160,7 +221,7 @@ public class CoastGuard extends Problem<CoastGuardState> {
         CoastGuardState state = prevNode.state.clone();
         state.passengerOnBoard = 0;
         CoastGuardNode node = new CoastGuardNode(state);
-        node.action = "Drop Passenger at a Station";
+        node.action = "drop";
         // update ships state
         int actionCost = node.update();
         node.pathCost = actionCost + prevNode.pathCost;
@@ -174,7 +235,7 @@ public class CoastGuard extends Problem<CoastGuardState> {
         move.accept(state);
         // create the next node
         CoastGuardNode node = new CoastGuardNode(state);
-        node.action = "move in direction " + actionStr;
+        node.action = actionStr;
         // update ships state
         int actionCost = node.update();
         node.pathCost = actionCost + prevNode.pathCost;
@@ -207,10 +268,10 @@ public class CoastGuard extends Problem<CoastGuardState> {
         if (state.pos.first < CoastGuardState.gridH - 1)
             operations.add(
                     (Node<CoastGuardState> n) -> this.moveOperation(n, (s) -> s.pos.first += 1, "down"));
-        if (state.pos.second > 0 && !node.action.equals("move in direction right"))
+        if (state.pos.second > 0)
             operations.add(
                     (Node<CoastGuardState> n) -> this.moveOperation(n, (s) -> s.pos.second -= 1, "left"));
-        if (state.pos.second < CoastGuardState.gridW - 1 && !node.action.equals("move in direction left"))
+        if (state.pos.second < CoastGuardState.gridW - 1)
             operations.add(
                     (Node<CoastGuardState> n) -> this.moveOperation(n, (s) -> s.pos.second += 1, "right"));
 
@@ -272,12 +333,12 @@ public class CoastGuard extends Problem<CoastGuardState> {
         // throw new RuntimeException(e);
         // }
 
-        TreeMap<Integer, Ship> t = new TreeMap<>();
-        t.put(1, new Ship(new Pair<Integer, Integer>(1, 1), 2, 10));
-        TreeMap<Integer, Ship> t2 = new TreeMap<>();
-        t2.put(1, new Ship(new Pair<Integer, Integer>(1, 1), 2, 10));
-
-        System.out.println(t.hashCode() + " " + t2.hashCode());
+//        TreeMap<Integer, Ship> t = new TreeMap<>();
+//        t.put(1, new Ship(new Pair<Integer, Integer>(1, 1), 2, 10));
+//        TreeMap<Integer, Ship> t2 = new TreeMap<>();
+//        t2.put(1, new Ship(new Pair<Integer, Integer>(1, 1), 2, 10));
+//
+//        System.out.println(t.hashCode() + " " + t2.hashCode());
     }
 
     public static void dump_graph(CoastGuardNode ptr, FileWriter writer, CoastGuardNode goal, String u)

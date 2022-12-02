@@ -24,6 +24,7 @@ public class CoastGuardNode extends Node<CoastGuardState>{
         // remove wrecked ships
         for(var key : toBeDeleted)
             state.ships.remove(key);
+        this.state.deadPassengers += lost - toBeDeleted.size();
         return lost;
     }
 

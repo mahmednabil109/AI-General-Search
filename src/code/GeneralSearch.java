@@ -10,6 +10,7 @@ public class GeneralSearch<T> {
 
     public HashSet<Node<T>> memo;
     public static int MaxDepth = -1;
+    public int expandedNodesCount = 0;
 
     // TODO Need to be modified to allow IDS
     /// Modified GeneralSearch procedure
@@ -17,19 +18,18 @@ public class GeneralSearch<T> {
     /// as the Queuing policies are specified when creating the queues
     public Node<T> search(Problem<T> p, Function<T, GenericQueue<Node<T>>> makeQ) {
         this.memo = new HashSet<>();
+        expandedNodesCount = 0;
         GenericQueue<Node<T>> queue = makeQ.apply(p.initialState);
         while (true) {
             if (queue.isEmpty()) return null;
             Node<T> node = queue.removeFront();
             node.mark_expanded();
+            expandedNodesCount ++;
             // to remove dublicates
             memo.add(node);
 //            System.out.println(node.depth);
 
             if (p.isGoal(node)) return node;
-
-            if(node.hashCode() == 1863076288)
-                System.out.println("here");
 
             for (Function<Node<T>, Node<T>> op : p.getPossibleOperations(node)) {
                 Node<T> newNode = op.apply(node);
