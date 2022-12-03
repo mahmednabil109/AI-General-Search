@@ -25,21 +25,17 @@ public class GeneralSearch<T> {
             Node<T> node = queue.removeFront();
             node.mark_expanded();
             expandedNodesCount ++;
-            // to remove dublicates
+            // to remove duplicates
             memo.add(node);
-//            System.out.println(node.depth);
 
             if (p.isGoal(node)) return node;
-
             for (Function<Node<T>, Node<T>> op : p.getPossibleOperations(node)) {
                 Node<T> newNode = op.apply(node);
                 newNode.parent = node;
-
                 if (memo.contains(newNode)) {
                     continue;
                 }
                 newNode.depth = node.depth + 1;
-
                 queue.add(newNode);
             }
         }

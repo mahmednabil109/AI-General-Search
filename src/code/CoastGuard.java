@@ -2,10 +2,8 @@ package code;
 
 import code.datastructure.*;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -86,7 +84,7 @@ public class CoastGuard extends Problem<CoastGuardState> {
             return "";
         String actions = coastGardProblem.backtrack(solution);
 
-        return actions.substring(1) + ";" + solution.state.deadPassengers + ";" + solution.state.retrivedBoxes + ";" + gs.expandedNodesCount;
+        return actions.substring(1) + ";" + solution.state.deadPassengers + ";" + solution.state.retrievedBoxes + ";" + gs.expandedNodesCount;
     }
 
     private String backtrack(Node<CoastGuardState> node){
@@ -211,7 +209,7 @@ public class CoastGuard extends Problem<CoastGuardState> {
         // update ships state
         int actionCost = node.update();
         node.pathCost = actionCost + prevNode.pathCost;
-        node.state.retrivedBoxes += 1;
+        node.state.retrievedBoxes += 1;
         return node;
     }
 

@@ -2,7 +2,6 @@ package code;
 
 import code.datastructure.Pair;
 
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -77,7 +76,7 @@ public class CoastGuardState implements Cloneable {
     public TreeMap<Pair<Integer, Integer>, Ship> ships;
 
     // info
-    public int retrivedBoxes, deadPassengers;
+    public int retrievedBoxes, deadPassengers;
 
 
     @Override
