@@ -30,6 +30,6 @@ public class CoastGuardNode extends Node<CoastGuardState>{
 
     @Override
     public String toString(){
-        return ""+Math.abs(this.hashCode()) + "_" + this.state.toString() + "_C"+this.pathCost;
+        return "_" + this.state.serialize() + "_C"+this.pathCost;
     }
 }

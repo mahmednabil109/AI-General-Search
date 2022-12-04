@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 public class GeneralSearch<T> {
 
-    public HashSet<Node<T>> memo;
+    public HashSet<String> memo;
     public static int MaxDepth = -1;
     public int expandedNodesCount = 0;
 
@@ -26,16 +26,19 @@ public class GeneralSearch<T> {
             node.mark_expanded();
             expandedNodesCount ++;
             // to remove duplicates
-            memo.add(node);
+            memo.add(node.toString());
 
             if (p.isGoal(node)) return node;
             for (Function<Node<T>, Node<T>> op : p.getPossibleOperations(node)) {
                 Node<T> newNode = op.apply(node);
                 newNode.parent = node;
-                if (memo.contains(newNode)) {
+                if (memo.contains(newNode.toString())) {
                     continue;
                 }
+                memo.add(newNode.toString());
                 newNode.depth = node.depth + 1;
+                // for debugging
+                if(MaxDepth != -1 && newNode.depth > MaxDepth) continue;
                 queue.add(newNode);
             }
         }

@@ -2,9 +2,11 @@ package code;
 
 import code.datastructure.*;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Consumer;
@@ -13,6 +15,7 @@ import java.util.function.Function;
 public class CoastGuard extends Problem<CoastGuardState> {
 
     public static int CoastGuardCapacity;
+    public static CoastGuardNode initNode;
 
     public CoastGuard() {
     }
@@ -22,17 +25,18 @@ public class CoastGuard extends Problem<CoastGuardState> {
         GeneralSearch<CoastGuardState> gs = new GeneralSearch<>();
         CoastGuard coastGardProblem = new CoastGuard();
 
-        Function<CoastGuardState, GenericQueue<Node<CoastGuardState>>> makeQ =  (CoastGuardState state) -> {
+        Function<CoastGuardState, GenericQueue<Node<CoastGuardState>>> makeQ = (CoastGuardState state) -> {
             CoastGuardNode node = new CoastGuardNode(state);
             GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
             queue.add(node);
             return queue;
         };
 
-        switch (algo){
+        switch (algo) {
             case "BF":
                 makeQ = (CoastGuardState state) -> {
                     CoastGuardNode node = new CoastGuardNode(state);
+                    initNode = node;
                     GenericQueue<Node<CoastGuardState>> queue = new GQueue<>();
                     queue.add(node);
                     return queue;
@@ -68,29 +72,23 @@ public class CoastGuard extends Problem<CoastGuardState> {
                 };
                 break;
             default:
-                    makeQ = (CoastGuardState state) -> {
-                        CoastGuardNode node = new CoastGuardNode(state);
-                        GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
-                        queue.add(node);
-                        return queue;
-                    };
+                makeQ = (CoastGuardState state) -> {
+                    CoastGuardNode node = new CoastGuardNode(state);
+                    GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
+                    queue.add(node);
+                    return queue;
+                };
         }
         // TODO handle "visualize" by traversing up the solution node
         Node<CoastGuardState> solution = gs.search(
                 CoastGuard.parse(problem),
                 makeQ
-                );
+        );
         if (solution == null)
             return "";
         String actions = coastGardProblem.backtrack(solution);
 
         return actions.substring(1) + ";" + solution.state.deadPassengers + ";" + solution.state.retrievedBoxes + ";" + gs.expandedNodesCount;
-    }
-
-    private String backtrack(Node<CoastGuardState> node){
-        if(node.parent == null)
-            return "";
-        return backtrack(node.parent) + "," + node.action;
     }
 
     public static String GenGrid() {
@@ -130,6 +128,60 @@ public class CoastGuard extends Problem<CoastGuardState> {
         return problem;
     }
 
+    public static void main(String[] args) {
+
+        String grid0 = "5,6;50;0,1;0,4,3,3;1,1,90;";
+        GeneralSearch.MaxDepth = -1;
+
+        var sol = solve(grid0, "BF", false);
+        CoastGuard cg = new CoastGuard();
+
+        File file = null;
+        try {
+            file = new File("./graph.dot");
+            file.createNewFile();
+            FileWriter writer = new FileWriter(file);
+
+            writer.write("digraph {\n");
+            dump_graph(initNode, writer, cg, "");
+            writer.write("\n}");
+
+            writer.flush();
+            writer.close();
+            System.out.println("[DONE] DUMP GRAPH");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void dump_graph(CoastGuardNode ptr, FileWriter writer, CoastGuard cg, String u)
+            throws IOException {
+        if (ptr == null)
+            return;
+        // u += "0";
+        if (cg.isGoal(ptr)) {
+            writer.write("\tNode_" + Objects.hash(ptr) + ptr + " [shape=\"doublecircle\"]" + "\n");
+        } else {
+            writer.write("\tNode_" + Objects.hash(ptr) + ptr + "\n");
+        }
+
+        int i = 1;
+        for (Node<CoastGuardState> child : ptr.children) {
+            String s = u + i;
+            writer.write(
+                    "\tNode_" + Objects.hash(ptr) + ptr + " -> " +
+                            "Node_" + Objects.hash(child) + child + " [label=\"" + child.action + "\"]" + "\n");
+            dump_graph((CoastGuardNode) child, writer, cg, s);
+            i++;
+        }
+    }
+
+    private String backtrack(Node<CoastGuardState> node) {
+        if (node.parent == null)
+            return "";
+        return backtrack(node.parent) + "," + node.action;
+    }
+
     @Override
     public boolean isGoal(Node<CoastGuardState> node) {
         if (node == null)
@@ -138,7 +190,6 @@ public class CoastGuard extends Problem<CoastGuardState> {
         CoastGuardState state = node.state;
         return state.ships.isEmpty() && state.passengerOnBoard == 0;
     }
-
 
     public Node<CoastGuardState> heuristicFunc1(Node<CoastGuardState> node) {
         CoastGuardState state = node.state;
@@ -174,7 +225,6 @@ public class CoastGuard extends Problem<CoastGuardState> {
         }
         return node;
     }
-
 
     public Node<CoastGuardState> retrievePassengerOperation(Node<CoastGuardState> prevNode) {
         // clone the state
@@ -227,7 +277,7 @@ public class CoastGuard extends Problem<CoastGuardState> {
     }
 
     public Node<CoastGuardState> moveOperation(Node<CoastGuardState> prevNode, Consumer<CoastGuardState> move,
-            String actionStr) {
+                                               String actionStr) {
         CoastGuardState state = prevNode.state.clone();
         // apply move operation
         move.accept(state);
@@ -260,104 +310,19 @@ public class CoastGuard extends Problem<CoastGuardState> {
             operations.add(this::retrieveBBOXOperation);
 
         // move operations
-        if (state.pos.first > 0)
+        if (state.pos.first > 0 && !node.action.equals("down"))
             operations.add(
                     (Node<CoastGuardState> n) -> this.moveOperation(n, (s) -> s.pos.first -= 1, "up"));
-        if (state.pos.first < CoastGuardState.gridH - 1)
+        if (state.pos.first < CoastGuardState.gridH - 1 && !node.action.equals("up"))
             operations.add(
                     (Node<CoastGuardState> n) -> this.moveOperation(n, (s) -> s.pos.first += 1, "down"));
-        if (state.pos.second > 0)
+        if (state.pos.second > 0 && !node.action.equals("right"))
             operations.add(
                     (Node<CoastGuardState> n) -> this.moveOperation(n, (s) -> s.pos.second -= 1, "left"));
-        if (state.pos.second < CoastGuardState.gridW - 1)
+        if (state.pos.second < CoastGuardState.gridW - 1 && !node.action.equals("left"))
             operations.add(
                     (Node<CoastGuardState> n) -> this.moveOperation(n, (s) -> s.pos.second += 1, "right"));
 
         return operations;
-    }
-
-    public static void main(String[] args) {
-
-        // CoastGuard.CoastGuardCapacity = 30;
-        // CoastGuardState.gridW = 3;
-        // CoastGuardState.gridH = 3;
-        //
-        // CoastGuard problem = new CoastGuard();
-        // CoastGuardState initState = new CoastGuardState();
-        // initState.passengerOnBoard = 0;
-        // initState.pos = new Pair<Integer, Integer>(2, 2);
-        // initState.ships = new TreeMap<>();
-        // initState.ships.put(
-        // new Pair<>(2,2),
-        // new Ship(new Pair<>(2,2), 2, 2)
-        // );
-        // initState.ships.put(
-        // new Pair<>(0, 2),
-        // new Ship(new Pair<>(0,2), 2, 2)
-        // );
-        // CoastGuardState.stations = new TreeSet<>();
-        // CoastGuardState.stations.add(new Pair<>(1, 1));
-        // problem.initialState = initState;
-        //
-        // GeneralSearch<CoastGuardState> solver = new GeneralSearch<>();
-        // Node<CoastGuardState> solution = solver.search(
-        // problem,
-        // (CoastGuardState state) -> {
-        // CoastGuardNode node = new CoastGuardNode(state);
-        // GenericQueue<Node<CoastGuardState>> queue = new GPriorityQueue<>();
-        // queue.add(node);
-        // return queue;
-        // }
-        // );
-        // System.out.println(solution);
-        // Node<CoastGuardState> ptr = solution;
-        //
-        // while(ptr != null && ptr.parent != null) ptr = ptr.parent;
-        //
-        // File file = null;
-        // try {
-        // file = new File("./graph.dot");
-        // file.createNewFile();
-        // FileWriter writer = new FileWriter(file);
-        //
-        // writer.write("digraph {\n");
-        // dump_graph((CoastGuardNode) ptr, writer, (CoastGuardNode) solution, "");
-        // writer.write("\n}");
-        //
-        // writer.flush();
-        // writer.close();
-        // System.out.println("[DONE] DUMP GRAPH");
-        // } catch (IOException e) {
-        // throw new RuntimeException(e);
-        // }
-
-//        TreeMap<Integer, Ship> t = new TreeMap<>();
-//        t.put(1, new Ship(new Pair<Integer, Integer>(1, 1), 2, 10));
-//        TreeMap<Integer, Ship> t2 = new TreeMap<>();
-//        t2.put(1, new Ship(new Pair<Integer, Integer>(1, 1), 2, 10));
-//
-//        System.out.println(t.hashCode() + " " + t2.hashCode());
-    }
-
-    public static void dump_graph(CoastGuardNode ptr, FileWriter writer, CoastGuardNode goal, String u)
-            throws IOException {
-        if (ptr == null)
-            return;
-        // u += "0";
-        if (ptr == goal) {
-            writer.write("\tNode_" + u + ptr.toString() + " [shape=\"doublecircle\"]" + "\n");
-        } else {
-            writer.write("\tNode_" + u + ptr.toString() + "\n");
-        }
-
-        int i = 1;
-        for (Node<CoastGuardState> child : ptr.children) {
-            String s = u + i;
-            writer.write(
-                    "\tNode_" + u + ptr.toString() + " -> " +
-                            "Node_" + s + child.toString() + " [label=\"" + child.action + "\"]" + "\n");
-            dump_graph((CoastGuardNode) child, writer, goal, s);
-            i++;
-        }
     }
 }

@@ -60,6 +60,10 @@ class Ship implements Cloneable{
         }
     }
 
+    public String serialize(){
+        return pos.toString() + "_" + passengerCount + "_" + blackBoxLive;
+    }
+
     @Override
     public String toString(){
         return pos.toString() + "," + passengerCount + "," + blackBoxLive;
@@ -120,6 +124,12 @@ public class CoastGuardState implements Cloneable {
         return Objects.hash(pos, passengerOnBoard, ships);
     }
 
+    public String serialize(){
+        String serializedShips = "";
+        for(var entry : ships.entrySet())
+            serializedShips += entry.getValue().serialize();
+        return pos.toString() + "_" + passengerOnBoard + "_" + serializedShips;
+    }
     @Override
     public String toString(){
         return pos.toString() + "," + passengerOnBoard + ";" + ships.toString();

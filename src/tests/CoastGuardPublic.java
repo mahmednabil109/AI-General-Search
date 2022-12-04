@@ -28,7 +28,7 @@ public class CoastGuardPublic {
     String grid10= "10,6;59;1,7;0,0,2,2,3,0,5,3;1,3,69,3,4,80,4,7,94,4,9,14,5,2,39;";
 
 
-    @Test(timeout = 100000)
+    @Test(timeout = 10000)
     public void testa0() throws Exception {
         String solution = CoastGuard.solve(grid0, "BF", false);
         solution = solution.replace(" ", "");
@@ -536,7 +536,7 @@ public class CoastGuardPublic {
             byte cc = (byte) (xc-cp);
             if(cc>=ts) {
                 cp+=ts;
-                ss.replace(x00+","+x01, (byte)-100);
+                ss.replace(x00+","+x01, (byte)-20);
             }
             else {
                 cp=xc;

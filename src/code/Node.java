@@ -33,7 +33,7 @@ public abstract class Node<T> implements Comparable<Node<T>>{
 
     @Override
     public String toString(){
-        return state.toString() ;//+ ";"+ compareCost "," + parent.pathCost;
+        return state.toString() + ";"+ compareCost + "," + pathCost;
     }
 
     @Override
