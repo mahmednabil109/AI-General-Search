@@ -2,93 +2,89 @@ package code;
 
 import code.datastructure.*;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class CoastGuard extends Problem<CoastGuardState> {
 
     public static int CoastGuardCapacity;
-    public static CoastGuardNode initNode;
+    public boolean usePathCost = true;
+    public Function<Node<CoastGuardState>, Integer> heuristic;
 
     public CoastGuard() {
     }
 
     public static String solve(String problem, String algo, boolean visualize) {
-        // TODO register the strategies some where
         GeneralSearch<CoastGuardState> gs = new GeneralSearch<>();
         CoastGuard coastGardProblem = new CoastGuard();
-
-        Function<CoastGuardState, GenericQueue<Node<CoastGuardState>>> makeQ = (CoastGuardState state) -> {
-            CoastGuardNode node = new CoastGuardNode(state);
-            GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
-            queue.add(node);
-            return queue;
-        };
+        // make it DF by default
+        GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
+        AtomicReference<CoastGuardNode> initNode = new AtomicReference<>();
 
         switch (algo) {
             case "BF":
-                makeQ = (CoastGuardState state) -> {
-                    CoastGuardNode node = new CoastGuardNode(state);
-                    initNode = node;
-                    GenericQueue<Node<CoastGuardState>> queue = new GQueue<>();
-                    queue.add(node);
-                    return queue;
-                };
-                break;
-            case "DF":
-                makeQ = (CoastGuardState state) -> {
-                    CoastGuardNode node = new CoastGuardNode(state);
-                    GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
-                    queue.add(node);
-                    return queue;
-                };
-                break;
-
-            case "ID":
-                makeQ = (CoastGuardState state) -> {
-                    CoastGuardNode node = new CoastGuardNode(state);
-                    GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
-                    queue.add(node);
-                    return queue;
-                };
+                queue = new GQueue<>();
                 break;
             case "UC":
-            case "GR1":
-            case "GR2":
-            case "AS1":
-            case "AS2":
-                makeQ = (CoastGuardState state) -> {
-                    CoastGuardNode node = new CoastGuardNode(state);
-                    GenericQueue<Node<CoastGuardState>> queue = new GPriorityQueue<>();
-                    queue.add(node);
-                    return queue;
-                };
+                queue = new GPriorityQueue<>();
                 break;
-            default:
-                makeQ = (CoastGuardState state) -> {
-                    CoastGuardNode node = new CoastGuardNode(state);
-                    GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
-                    queue.add(node);
-                    return queue;
-                };
+            case "GR1":
+                coastGardProblem.usePathCost = false;
+                coastGardProblem.heuristic = coastGardProblem::heuristicFunc1;
+                queue = new GPriorityQueue<>();
+                break;
+            case "GR2":
+                coastGardProblem.usePathCost = false;
+                coastGardProblem.heuristic = coastGardProblem::heuristicFunc2;
+                queue = new GPriorityQueue<>();
+                break;
+            case "AS1":
+                coastGardProblem.heuristic = coastGardProblem::heuristicFunc1;
+                queue = new GPriorityQueue<>();
+                break;
+            case "AS2":
+                coastGardProblem.heuristic = coastGardProblem::heuristicFunc2;
+                queue = new GPriorityQueue<>();
         }
-        // TODO handle "visualize" by traversing up the solution node
-        Node<CoastGuardState> solution = gs.search(
-                CoastGuard.parse(problem),
-                makeQ
-        );
+        GenericQueue<Node<CoastGuardState>> finalQueue = queue;
+        Function<CoastGuardState, GenericQueue<Node<CoastGuardState>>> makeQ = (CoastGuardState state) -> {
+            CoastGuardNode node = new CoastGuardNode(state);
+            initNode.set(node);
+            finalQueue.add(node);
+            return finalQueue;
+        };
+
+        // used for visualization
+        ArrayList<Node<CoastGuardState>> initNodes = new ArrayList<>();
+        if (algo.equals("ID"))
+            gs.MaxDepth = 0;
+        Node<CoastGuardState> solution = null;
+        do {
+            solution = gs.search(
+                    CoastGuard.parse(problem),
+                    makeQ
+            );
+            initNodes.add(initNode.get());
+            gs.MaxDepth += 1;
+        } while (algo.equals("ID") && solution == null);
         if (solution == null)
             return "";
         String actions = coastGardProblem.backtrack(solution);
-
-        return actions.substring(1) + ";" + solution.state.deadPassengers + ";" + solution.state.retrievedBoxes + ";" + gs.expandedNodesCount;
+        // TODO handle visualize;
+        return actions.substring(1)
+                + ";"
+                + solution.state.deadPassengers
+                + ";"
+                + solution.state.retrievedBoxes
+                + ";"
+                + gs.expandedNodesCount;
     }
 
     public static String GenGrid() {
@@ -130,30 +126,32 @@ public class CoastGuard extends Problem<CoastGuardState> {
 
     public static void main(String[] args) {
 
-        String grid0 = "5,6;50;0,1;0,4,3,3;1,1,90;";
-        GeneralSearch.MaxDepth = -1;
-
-        var sol = solve(grid0, "BF", false);
-        CoastGuard cg = new CoastGuard();
-
-        File file = null;
-        try {
-            file = new File("./graph.dot");
-            file.createNewFile();
-            FileWriter writer = new FileWriter(file);
-
-            writer.write("digraph {\n");
-            dump_graph(initNode, writer, cg, "");
-            writer.write("\n}");
-
-            writer.flush();
-            writer.close();
-            System.out.println("[DONE] DUMP GRAPH");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        String grid0 = "5,6;50;0,1;0,4,3,3;1,1,90;";
+//
+//        var sol = solve(grid0, "BF", false);
+//        CoastGuard cg = new CoastGuard();
+//
+//        File file = null;
+//        try {
+//            file = new File("./graph.dot");
+//            file.createNewFile();
+//            FileWriter writer = new FileWriter(file);
+//
+//            writer.write("digraph {\n");
+//            dump_graph(initNode, writer, cg, "");
+//            writer.write("\n}");
+//
+//            writer.flush();
+//            writer.close();
+//            System.out.println("[DONE] DUMP GRAPH");
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
+    // dump_graph is used to convert the whole traversed graph into dot language;
+    // to be visualised with graphize
+    // used for debugging
     public static void dump_graph(CoastGuardNode ptr, FileWriter writer, CoastGuard cg, String u)
             throws IOException {
         if (ptr == null)
@@ -177,6 +175,8 @@ public class CoastGuard extends Problem<CoastGuardState> {
     }
 
     private String backtrack(Node<CoastGuardState> node) {
+        if (node == null)
+            return "";
         if (node.parent == null)
             return "";
         return backtrack(node.parent) + "," + node.action;
@@ -191,21 +191,20 @@ public class CoastGuard extends Problem<CoastGuardState> {
         return state.ships.isEmpty() && state.passengerOnBoard == 0;
     }
 
-    public Node<CoastGuardState> heuristicFunc1(Node<CoastGuardState> node) {
+    public Integer heuristicFunc1(Node<CoastGuardState> node) {
         CoastGuardState state = node.state;
         /*
          * this heuristic works by estimating the remaining cost to the goal;
          * with the number of remaining ships.
          */
-        node.compareCost += state.ships.size();
-        return node;
+        return state.ships.size();
     }
 
     private Integer _ManhattanDistance(Pair<Integer, Integer> p1, Pair<Integer, Integer> p2) {
         return Math.abs(p1.first - p2.first) + Math.abs(p1.second - p2.second);
     }
 
-    public Node<CoastGuardState> heuristicFunc2(Node<CoastGuardState> node) {
+    public Integer heuristicFunc2(Node<CoastGuardState> node) {
         CoastGuardState state = node.state;
 
         // get closest ship
@@ -219,11 +218,11 @@ public class CoastGuard extends Problem<CoastGuardState> {
         }
         // add cost
         if (closest != null) {
-            node.compareCost += Math.min(
+            return Math.min(
                     _ManhattanDistance(state.pos, closest.pos),
                     closest.passengerCount);
         }
-        return node;
+        return 0;
     }
 
     public Node<CoastGuardState> retrievePassengerOperation(Node<CoastGuardState> prevNode) {
@@ -245,6 +244,10 @@ public class CoastGuard extends Problem<CoastGuardState> {
         // update ships state and path cost
         int actionCost = node.update();
         node.pathCost = actionCost + prevNode.pathCost;
+        if (usePathCost)
+            node.compareCost = node.pathCost;
+        if (heuristic != null)
+            node.compareCost += heuristic.apply(node);
         return node;
     }
 
@@ -259,6 +262,10 @@ public class CoastGuard extends Problem<CoastGuardState> {
         // update ships state
         int actionCost = node.update();
         node.pathCost = actionCost + prevNode.pathCost;
+        if (usePathCost)
+            node.compareCost = node.pathCost;
+        if (heuristic != null)
+            node.compareCost += heuristic.apply(node);
         node.state.retrievedBoxes += 1;
         return node;
     }
@@ -273,6 +280,10 @@ public class CoastGuard extends Problem<CoastGuardState> {
         // update ships state
         int actionCost = node.update();
         node.pathCost = actionCost + prevNode.pathCost;
+        if (usePathCost)
+            node.compareCost = node.pathCost;
+        if (heuristic != null)
+            node.compareCost += heuristic.apply(node);
         return node;
     }
 
@@ -287,6 +298,10 @@ public class CoastGuard extends Problem<CoastGuardState> {
         // update ships state
         int actionCost = node.update();
         node.pathCost = actionCost + prevNode.pathCost;
+        if (usePathCost)
+            node.compareCost = node.pathCost;
+        if (heuristic != null)
+            node.compareCost += heuristic.apply(node);
         return node;
     }
 

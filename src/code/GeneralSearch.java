@@ -9,7 +9,7 @@ import java.util.function.Function;
 public class GeneralSearch<T> {
 
     public HashSet<String> memo;
-    public static int MaxDepth = -1;
+    public int MaxDepth = -1;
     public int expandedNodesCount = 0;
 
     // TODO Need to be modified to allow IDS
