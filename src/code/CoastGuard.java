@@ -77,7 +77,8 @@ public class CoastGuard extends Problem<CoastGuardState> {
         if (solution == null)
             return "";
         String actions = coastGardProblem.backtrack(solution);
-        // TODO handle visualize;
+        if (visualize)
+            visualizeSolution(solution, initNodes);
         return actions.substring(1)
                 + ";"
                 + solution.state.deadPassengers
@@ -85,6 +86,36 @@ public class CoastGuard extends Problem<CoastGuardState> {
                 + solution.state.retrievedBoxes
                 + ";"
                 + gs.expandedNodesCount;
+    }
+
+    private static void visualizeSolution(Node<CoastGuardState> solution, ArrayList<Node<CoastGuardState>> initNodes) {
+        if (initNodes.size() > 1) {
+            for (int d = 0; d < initNodes.size(); d++) {
+                System.out.println("Iterative Deepening at max depth " + d);
+                GStack<Node<CoastGuardState>> st = new GStack<>();
+                st.add(initNodes.get(d));
+                while (!st.isEmpty()) {
+                    Node<CoastGuardState> node = st.removeFront();
+                    for (Node child : node.children)
+                        st.add(child);
+                    System.out.println(((CoastGuardNode) node).visualize());
+                    if (node.equals(solution))
+                        break;
+                }
+                System.out.println("----------------------------------------------------");
+            }
+            System.out.println("Final Solution");
+        }
+
+        backtrackVisualize(solution);
+
+    }
+
+    private static void backtrackVisualize(Node<CoastGuardState> node) {
+        if (node == null)
+            return;
+        backtrackVisualize(node.parent);
+        System.out.println(((CoastGuardNode) node).visualize());
     }
 
     public static String GenGrid() {
@@ -113,11 +144,11 @@ public class CoastGuard extends Problem<CoastGuardState> {
 
         String[] ships = parts[4].split(",");
         initState.ships = new TreeMap<>();
-        for (int i = 0; i < ships.length; i += 3) {
+        for (int i = 0, id = 0; i < ships.length; i += 3, id++) {
             Pair<Integer, Integer> pos = new Pair(Integer.parseInt(ships[i]), Integer.parseInt(ships[i + 1]));
             initState.ships.put(
                     pos,
-                    new Ship(pos, Integer.parseInt(ships[i + 2]), 20));
+                    new Ship(pos, Integer.parseInt(ships[i + 2]), 20, id));
         }
         CoastGuard problem = new CoastGuard();
         problem.initialState = initState;
@@ -126,9 +157,10 @@ public class CoastGuard extends Problem<CoastGuardState> {
 
     public static void main(String[] args) {
 
-//        String grid0 = "5,6;50;0,1;0,4,3,3;1,1,90;";
-//
-//        var sol = solve(grid0, "BF", false);
+        String grid0 = "5,6;50;0,1;0,4,3,3;1,1,90;";
+
+        var sol = solve(grid0, "AS2", true);
+        System.out.println(sol);
 //        CoastGuard cg = new CoastGuard();
 //
 //        File file = null;
@@ -274,6 +306,7 @@ public class CoastGuard extends Problem<CoastGuardState> {
         if (prevNode.hashCode() == 1863076288)
             System.out.println("here");
         CoastGuardState state = prevNode.state.clone();
+        state.savedPassengers += state.passengerOnBoard;
         state.passengerOnBoard = 0;
         CoastGuardNode node = new CoastGuardNode(state);
         node.action = "drop";

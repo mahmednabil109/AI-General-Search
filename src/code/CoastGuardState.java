@@ -2,6 +2,7 @@ package code;
 
 import code.datastructure.Pair;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -10,11 +11,13 @@ class Ship implements Cloneable{
     public Pair<Integer, Integer> pos;
     public int passengerCount;
     public int blackBoxLive;
+    public int id;
 
-    public Ship(Pair<Integer, Integer> pos, int passengerCount, int blackBoxLive){
+    public Ship(Pair<Integer, Integer> pos, int passengerCount, int blackBoxLive, int id){
         this.pos = pos;
         this.passengerCount = passengerCount;
         this.blackBoxLive = blackBoxLive;
+        this.id = id;
     }
 
     // returns true if the ship is wreck
@@ -80,7 +83,7 @@ public class CoastGuardState implements Cloneable {
     public TreeMap<Pair<Integer, Integer>, Ship> ships;
 
     // info
-    public int retrievedBoxes, deadPassengers;
+    public int retrievedBoxes, deadPassengers, savedPassengers;
 
 
     @Override
@@ -133,5 +136,20 @@ public class CoastGuardState implements Cloneable {
     @Override
     public String toString(){
         return pos.toString() + "," + passengerOnBoard + ";" + ships.toString();
+    }
+
+    public String gridRep() {
+        char[][] grid = new char[gridH][gridW];
+        for(char[] x:grid)
+            Arrays.fill(x, '.');
+        for(Pair<Integer, Integer> st: stations)
+            grid[st.first][st.second] = 'S';
+        for(Ship s: ships.values())
+            grid[s.pos.first][s.pos.second] = (char)(s.id + '0');
+        grid[pos.first][pos.second] = 'B';
+        StringBuilder sb = new StringBuilder();
+        for(char[] x: grid)
+            sb.append(String.valueOf(x)+"\n");
+        return sb.toString();
     }
 }
