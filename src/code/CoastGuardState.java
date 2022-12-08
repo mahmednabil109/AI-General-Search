@@ -2,7 +2,7 @@ package code;
 
 import code.datastructure.Pair;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -11,11 +11,13 @@ class Ship implements Cloneable{
     public Pair<Integer, Integer> pos;
     public int passengerCount;
     public int blackBoxLive;
+    public int id;
 
-    public Ship(Pair<Integer, Integer> pos, int passengerCount, int blackBoxLive){
+    public Ship(Pair<Integer, Integer> pos, int passengerCount, int blackBoxLive, int id){
         this.pos = pos;
         this.passengerCount = passengerCount;
         this.blackBoxLive = blackBoxLive;
+        this.id = id;
     }
 
     // returns true if the ship is wreck
@@ -61,6 +63,10 @@ class Ship implements Cloneable{
         }
     }
 
+    public String serialize(){
+        return pos.toString() + "_" + passengerCount + "_" + blackBoxLive;
+    }
+
     @Override
     public String toString(){
         return pos.toString() + "," + passengerCount + "," + blackBoxLive;
@@ -77,7 +83,7 @@ public class CoastGuardState implements Cloneable {
     public TreeMap<Pair<Integer, Integer>, Ship> ships;
 
     // info
-    public int retrivedBoxes, deadPassengers;
+    public int retrievedBoxes, deadPassengers, savedPassengers;
 
 
     @Override
@@ -121,8 +127,29 @@ public class CoastGuardState implements Cloneable {
         return Objects.hash(pos, passengerOnBoard, ships);
     }
 
+    public String serialize(){
+        String serializedShips = "";
+        for(var entry : ships.entrySet())
+            serializedShips += entry.getValue().serialize();
+        return pos.toString() + "_" + passengerOnBoard + "_" + serializedShips;
+    }
     @Override
     public String toString(){
         return pos.toString() + "," + passengerOnBoard + ";" + ships.toString();
+    }
+
+    public String gridRep() {
+        char[][] grid = new char[gridH][gridW];
+        for(char[] x:grid)
+            Arrays.fill(x, '.');
+        for(Pair<Integer, Integer> st: stations)
+            grid[st.first][st.second] = 'S';
+        for(Ship s: ships.values())
+            grid[s.pos.first][s.pos.second] = (char)(s.id + '0');
+        grid[pos.first][pos.second] = 'B';
+        StringBuilder sb = new StringBuilder();
+        for(char[] x: grid)
+            sb.append(String.valueOf(x)+"\n");
+        return sb.toString();
     }
 }
