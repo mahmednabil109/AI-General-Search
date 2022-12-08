@@ -129,8 +129,10 @@ public class CoastGuard extends Problem<CoastGuardState> {
     public static void main(String[] args) {
 
         String grid0 = "5,6;50;0,1;0,4,3,3;1,1,90;";
+        String grid2 = "7,5;40;2,3;3,6;1,1,10,4,5,90;";
 
-        var sol = solve(grid0, "IDS", true);
+
+        var sol = solve(grid2, "BF", true);
         System.out.println(sol);
 //        CoastGuard cg = new CoastGuard();
 //
@@ -324,8 +326,8 @@ public class CoastGuard extends Problem<CoastGuardState> {
         if (CoastGuardState.stations.contains(state.pos) && state.passengerOnBoard > 0)
             operations.add(this::dropOperation);
 
-        // retrieve BBox operation
-        if (current != null && current.passengerCount == 0 && !current.isWreck())
+        // retrieve BBox operation && take count of updating before perform action for some reason !!!!!!!
+        if (current != null && current.passengerCount == 0 && !current.isWreck() && current.blackBoxLive > 1)
             operations.add(this::retrieveBBOXOperation);
 
         // move operations
