@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -26,7 +25,6 @@ public class CoastGuard extends Problem<CoastGuardState> {
         CoastGuard coastGardProblem = new CoastGuard();
         // make it DF by default
         GenericQueue<Node<CoastGuardState>> queue = new GStack<>();
-        AtomicReference<CoastGuardNode> initNode = new AtomicReference<>();
 
         switch (algo) {
             case "BF":
@@ -56,13 +54,10 @@ public class CoastGuard extends Problem<CoastGuardState> {
         GenericQueue<Node<CoastGuardState>> finalQueue = queue;
         Function<CoastGuardState, GenericQueue<Node<CoastGuardState>>> makeQ = (CoastGuardState state) -> {
             CoastGuardNode node = new CoastGuardNode(state);
-            initNode.set(node);
             finalQueue.add(node);
             return finalQueue;
         };
 
-        // used for visualization
-        ArrayList<Node<CoastGuardState>> initNodes = new ArrayList<>();
         if (algo.equals("ID"))
             gs.MaxDepth = 0;
         Node<CoastGuardState> solution = null;
@@ -71,14 +66,13 @@ public class CoastGuard extends Problem<CoastGuardState> {
                     CoastGuard.parse(problem),
                     makeQ
             );
-            initNodes.add(initNode.get());
             gs.MaxDepth += 1;
         } while (algo.equals("ID") && solution == null);
         if (solution == null)
             return "";
         String actions = coastGardProblem.backtrack(solution);
         if (visualize)
-            visualizeSolution(solution, initNodes);
+            backtrackVisualize(solution);
         return actions.substring(1)
                 + ";"
                 + solution.state.deadPassengers
@@ -86,29 +80,6 @@ public class CoastGuard extends Problem<CoastGuardState> {
                 + solution.state.retrievedBoxes
                 + ";"
                 + gs.expandedNodesCount;
-    }
-
-    private static void visualizeSolution(Node<CoastGuardState> solution, ArrayList<Node<CoastGuardState>> initNodes) {
-        if (initNodes.size() > 1) {
-            for (int d = 0; d < initNodes.size(); d++) {
-                System.out.println("Iterative Deepening at max depth " + d);
-                GStack<Node<CoastGuardState>> st = new GStack<>();
-                st.add(initNodes.get(d));
-                while (!st.isEmpty()) {
-                    Node<CoastGuardState> node = st.removeFront();
-                    for (Node child : node.children)
-                        st.add(child);
-                    System.out.println(((CoastGuardNode) node).visualize());
-                    if (node.equals(solution))
-                        break;
-                }
-                System.out.println("----------------------------------------------------");
-            }
-            System.out.println("Final Solution");
-        }
-
-        backtrackVisualize(solution);
-
     }
 
     private static void backtrackVisualize(Node<CoastGuardState> node) {
@@ -159,7 +130,7 @@ public class CoastGuard extends Problem<CoastGuardState> {
 
         String grid0 = "5,6;50;0,1;0,4,3,3;1,1,90;";
 
-        var sol = solve(grid0, "AS2", true);
+        var sol = solve(grid0, "IDS", true);
         System.out.println(sol);
 //        CoastGuard cg = new CoastGuard();
 //
